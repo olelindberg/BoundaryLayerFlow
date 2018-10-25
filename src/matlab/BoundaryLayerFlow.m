@@ -111,7 +111,7 @@ for kId = 1:length(kFFT)
     Eq22(1,1) = 1;
     % Assemble:
     Eq2  = [Eq21,Eq22,Eq23,Eq24];
-    rhs2 = (k1*u0).^2*f1FFT(kId);
+    rhs2 = (k1*u0).^2*f1FFT(kId );
     rhs2(1) = 0;
 
     % Mass conservation:

@@ -1,6 +1,15 @@
 clear all
 close all
 
+showTopography              = 0;
+showTopographyFourierSpace  = 0;
+showVerticalCoordinate      = 0;
+showReferenceVelocity       = 0;
+showFourierSpaceSolutions   = 1;
+
+isInvicid       = 0;
+waveNumberMax   = 100000;
+
 rho   = 1.25;
 z0    = 0.03;
 kappa = 0.4;
@@ -9,15 +18,14 @@ kappa = 0.4;
 % Horizontal coordinate:
 %------------------------------------------------------------------------------
 Lx = 1000;
-Nx = 32;
+Nx = 16;
 dx = Lx/Nx;
-x  = (0:dx:Lx)';
+x  = (dx/2:dx:Lx-dx/2)';
 
 %------------------------------------------------------------------------------
 % Topography:
 %------------------------------------------------------------------------------
-A1 = 50;
-f1 = A1*cos(2*pi/Lx*x);
+f1 = Topography(1,Lx,x);
 
 %------------------------------------------------------------------------------
 % Vertical coordinate computational space:
@@ -28,13 +36,12 @@ deta    = etaMax/Nz;
 etaf    = (0:deta:etaMax-deta)';  
 etac    = (deta/2:deta:etaMax-deta/2)';  
 
-
 f1FFT = fftshift(fft(f1));
 kFFT  = 2*pi/Lx*(-Nx/2:Nx/2-1)';
 
 %uFFT = 
 
-for kId = 1:length(kFFT)
+for kId = 1:min(length(kFFT),waveNumberMax)
 
     k1 = kFFT(kId);
     
@@ -42,20 +49,9 @@ for kId = 1:length(kFFT)
     fflush(stdout); 
 
     %------------------------------------------------------------------------------
-    % Inner layer thickness:
+    % Vertical grid:
     %------------------------------------------------------------------------------
-    li = InnerLayerThickness(Lx,kappa,z0,1e-10,1000);
-
-    %------------------------------------------------------------------------------
-    % Outer layer thickness:
-    %------------------------------------------------------------------------------
-    lo = OuterLayerThickness(k1);
-
-    %------------------------------------------------------------------------------
-    % Vertical coordinate physical space:
-    %------------------------------------------------------------------------------
-    Zf = VerticalCoordinate(z0,li,lo,etaf);
-    Zc = VerticalCoordinate(z0,li,lo,etac);
+    [Zf,Zc] = VerticalGrid(Lx,kappa,z0,k1,etaf,etac);
 
     %------------------------------------------------------------------------------
     % Friction velocity:
@@ -68,6 +64,10 @@ for kId = 1:length(kFFT)
     % Reference velocity:
     %------------------------------------------------------------------------------
     [u0,u0z] = LogarithmicVelocityProfile(us,kappa,z0,Zf);
+    if isInvicid
+        u0  = 0*Zf+u10;
+        u0z = 0*Zf;
+    end
 
     %------------------------------------------------------------------------------
     % First order Fourier transformed Reynolds equations (eq. 6 page 276):
@@ -87,7 +87,12 @@ for kId = 1:length(kFFT)
     Eq11 = spdiags(1i*k1*u0    ,0,Nz,Nz);
     Eq12 = spdiags(u0z         ,0,Nz,Nz);
     Eq13 = spdiags(rhoInv*1i*k1*ones(Nz,1),0,Nz,Nz);
-    Eq14 = -Dzc;
+    if isInvicid
+        Eq14 = ZERO;
+    else
+        Eq14 = -Dzc;
+    end
+
     % Boundary conditions on u1:
     Eq11(1,:) = 0;
     Eq12(1,:) = 0;
@@ -158,6 +163,7 @@ for kId = 1:length(kFFT)
     p1   = sol(:,3);
     tau1 = sol(:,4);
 
+if showFourierSpaceSolutions
 figure
 subplot(2,2,1)
 plot(u1,Zf)
@@ -171,24 +177,33 @@ grid on
 subplot(2,2,4)
 plot(tau1,Zc)
 grid on
-
 end
-
-
-
-adsf
-
+end
 
 %------------------------------------------------------------------------------
 % Plots:
 %------------------------------------------------------------------------------
-figure
-plot(x,f1,'k-','LineWidth',2)
-grid on
-axis equal
-xlabel('x')
-ylabel('z')
+if showTopography
+    figure
+    plot(x,f1,'k-','LineWidth',2)
+    grid on
+    axis equal
+    xlabel('x')
+    ylabel('z')
+end
 
+if showTopographyFourierSpace
+    figure
+    plot(kFFT,real(f1FFT),'r-','LineWidth',2)
+    hold on
+    plot(kFFT,imag(f1FFT),'g-','LineWidth',2)
+    grid on
+    xlabel('x')
+    ylabel('z')
+end
+
+
+if showVerticalCoordinate
 figure
 plot(etaf,Zf,'r-','LineWidth',2)
 hold on
@@ -199,7 +214,9 @@ title('Coordinate transform')
 xlabel('\eta')
 ylabel('Z')
 grid on
+end
 
+if showReferenceVelocity
 figure
 plot([0 12],[li li],'k-','LineWidth',2)
 hold on
@@ -210,6 +227,6 @@ title('Logarithmic velocity profile')
 xlabel('u_0')
 ylabel('Z')
 grid on
-
+end
 
 

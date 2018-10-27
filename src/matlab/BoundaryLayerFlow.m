@@ -1,24 +1,24 @@
 clear all
 close all
 
-showTopography              = 0;
-showTopographyFourierSpace  = 0;
+showTopography              = 1;
+showTopographyFourierSpace  = 1;
 showVerticalCoordinate      = 0;
 showReferenceVelocity       = 0;
-showFourierSpaceSolutions   = 1;
+showFourierSpaceSolutions   = 0;
 
 isInvicid       = 0;
 waveNumberMax   = 100000;
 
 rho   = 1.25;
-z0    = 0.03;
+z0    = 0.05;
 kappa = 0.4;
 
 %------------------------------------------------------------------------------
 % Horizontal coordinate:
 %------------------------------------------------------------------------------
 Lx = 1000;
-Nx = 16;
+Nx = 64;
 dx = Lx/Nx;
 x  = (dx/2:dx:Lx-dx/2)';
 
@@ -31,7 +31,7 @@ f1 = Topography(1,Lx,x);
 % Vertical coordinate computational space:
 %------------------------------------------------------------------------------
 Nz      = 32;
-etaMax  = 3;
+etaMax  = 1;
 deta    = etaMax/Nz;
 etaf    = (0:deta:etaMax-deta)';  
 etac    = (deta/2:deta:etaMax-deta/2)';  
@@ -39,7 +39,8 @@ etac    = (deta/2:deta:etaMax-deta/2)';
 f1FFT = fftshift(fft(f1));
 kFFT  = 2*pi/Lx*(-Nx/2:Nx/2-1)';
 
-%uFFT = 
+u1FFT = zeros(Nx,Nz);
+w1FFT = zeros(Nx,Nz);
 
 for kId = 1:min(length(kFFT),waveNumberMax)
 
@@ -129,10 +130,15 @@ for kId = 1:min(length(kFFT),waveNumberMax)
     Eq32(end,:) = 0;
     Eq33(end,:) = 0;
     Eq34(end,:) = 0;
+    
+    alphak = sqrt(k1*k1);
+    uop    = k1*u0(end);
+    Eq32(end,end) = -1i*uop/alphak;
     Eq33(end,end) = 1;
     % Assemble:
     Eq3  = [Eq31,Eq32,Eq33,Eq34];
     rhs3 = zeros(Nz,1);
+    rhs3(end) = - uop^2/alphak*f1FFT(kId );
 
     % Mixing-length closure:
     Eq41 = spdiags(2*kappa*(Zf-z0)*us,0,Nz,Nz)*Dzf;
@@ -163,22 +169,47 @@ for kId = 1:min(length(kFFT),waveNumberMax)
     p1   = sol(:,3);
     tau1 = sol(:,4);
 
-if showFourierSpaceSolutions
+    u1FFT(kId,:) = u1;
+    w1FFT(kId,:) = w1;
+
+    if showFourierSpaceSolutions
+        figure
+        subplot(2,2,1)
+        plot(u1,Zf)
+        grid on
+        subplot(2,2,2)
+        plot(w1,Zf)
+        grid on
+        subplot(2,2,3)
+        plot(p1,Zc)
+        grid on
+        subplot(2,2,4)
+        plot(tau1,Zc)
+        grid on
+    end
+end
+
+u1All = 0*u1FFT;
+w1All = 0*w1FFT;
+for i = 1:Nz
+    u1All(:,i) = ifft(fftshift(u1FFT(:,i)));
+    w1All(:,i) = ifft(fftshift(w1FFT(:,i)));
+end
+u1All = real(u1All);
+w1All = real(w1All);
+mesh(w1All)
+
 figure
-subplot(2,2,1)
-plot(u1,Zf)
-grid on
-subplot(2,2,2)
-plot(w1,Zf)
-grid on
-subplot(2,2,3)
-plot(p1,Zc)
-grid on
-subplot(2,2,4)
-plot(tau1,Zc)
-grid on
+for i = 1:Nx
+    plot(x(i)+u1All(i,:),f1(i)+Zf)
+    hold on
 end
-end
+
+figure
+quiver(u1All',w1All')
+
+adsf
+
 
 %------------------------------------------------------------------------------
 % Plots:
@@ -204,29 +235,29 @@ end
 
 
 if showVerticalCoordinate
-figure
-plot(etaf,Zf,'r-','LineWidth',2)
-hold on
-plot(etac,Zc,'g-','LineWidth',2)
-plot(etaf,Zf,'b.')
-plot(etac,Zc,'c.')
-title('Coordinate transform')
-xlabel('\eta')
-ylabel('Z')
-grid on
+    figure
+    plot(etaf,Zf,'r-','LineWidth',2)
+    hold on
+    plot(etac,Zc,'g-','LineWidth',2)
+    plot(etaf,Zf,'b.')
+    plot(etac,Zc,'c.')
+    title('Coordinate transform')
+    xlabel('\eta')
+    ylabel('Z')
+    grid on
 end
 
 if showReferenceVelocity
-figure
-plot([0 12],[li li],'k-','LineWidth',2)
-hold on
-plot([0 12],[li+lo li+lo],'k-','LineWidth',2)
-plot(u0,Zf,'r-','LineWidth',2)
-plot(u0,Zf,'b.')
-title('Logarithmic velocity profile')
-xlabel('u_0')
-ylabel('Z')
-grid on
+    figure
+    plot([0 12],[li li],'k-','LineWidth',2)
+    hold on
+    plot([0 12],[li+lo li+lo],'k-','LineWidth',2)
+    plot(u0,Zf,'r-','LineWidth',2)
+    plot(u0,Zf,'b.')
+    title('Logarithmic velocity profile')
+    xlabel('u_0')
+    ylabel('Z')
+    grid on
 end
 
 

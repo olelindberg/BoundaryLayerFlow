@@ -1,5 +1,12 @@
 function [Zf,Zc] = VerticalGrid(Lx,kappa,z0,k1,etaf,etac)
 
+verticalGridId = 0;
+
+if verticalGridId==0
+    zMax = 0.10*Lx;
+    Zf = etaf*zMax;
+    Zc = etac*zMax;
+elseif verticalGridId==1
 %------------------------------------------------------------------------------
 % Inner layer thickness:
 %------------------------------------------------------------------------------
@@ -15,4 +22,4 @@ lo = OuterLayerThickness(k1);
 %------------------------------------------------------------------------------
 Zf = VerticalCoordinate(z0,li,lo,etaf);
 Zc = VerticalCoordinate(z0,li,lo,etac);
-
+end

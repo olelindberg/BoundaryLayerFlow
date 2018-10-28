@@ -2,7 +2,7 @@ clear all
 close all
 
 showTopography              = 1;
-showTopographyFourierSpace  = 1;
+showTopographyFourierSpace  = 0;
 showVerticalCoordinate      = 0;
 showReferenceVelocity       = 0;
 showFourierSpaceSolutions   = 0;
@@ -11,7 +11,7 @@ isInvicid       = 0;
 waveNumberMax   = 100000;
 
 rho   = 1.25;
-z0    = 0.05;
+z0    = 1.0;
 kappa = 0.4;
 
 %------------------------------------------------------------------------------
@@ -30,7 +30,7 @@ f1 = Topography(1,Lx,x);
 %------------------------------------------------------------------------------
 % Vertical coordinate computational space:
 %------------------------------------------------------------------------------
-Nz      = 32;
+Nz      = 256;
 etaMax  = 1;
 deta    = etaMax/Nz;
 etaf    = (0:deta:etaMax-deta)';  
@@ -57,7 +57,7 @@ for kId = 1:min(length(kFFT),waveNumberMax)
     %------------------------------------------------------------------------------
     % Friction velocity:
     %------------------------------------------------------------------------------
-    z10 = 10;
+    z10 = z0+10;
     u10 = 10;  % wind velocity in z=10m
     us  = u10*kappa/(log((z10+z0)/z0));
 
@@ -141,7 +141,7 @@ for kId = 1:min(length(kFFT),waveNumberMax)
     rhs3(end) = - uop^2/alphak*f1FFT(kId );
 
     % Mixing-length closure:
-    Eq41 = spdiags(2*kappa*(Zf-z0)*us,0,Nz,Nz)*Dzf;
+    Eq41 = spdiags(2*kappa*(Zc-z0)*us,0,Nz,Nz)*Dzf;
     Eq42 = ZERO;
     Eq43 = ZERO;
     Eq44 = -speye(Nz,Nz);
@@ -197,28 +197,18 @@ for i = 1:Nz
 end
 u1All = real(u1All);
 w1All = real(w1All);
-mesh(w1All)
-
-figure
-for i = 1:Nx
-    plot(x(i)+u1All(i,:),f1(i)+Zf)
-    hold on
-end
-
-figure
-quiver(u1All',w1All')
-
-adsf
-
 
 %------------------------------------------------------------------------------
 % Plots:
 %------------------------------------------------------------------------------
+figure
+for i = 1:Nx
+    plot(x(i)+u1All(i,:),f1(i)+Zf-z0)
+    hold on
+end
 if showTopography
-    figure
     plot(x,f1,'k-','LineWidth',2)
     grid on
-    axis equal
     xlabel('x')
     ylabel('z')
 end

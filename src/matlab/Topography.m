@@ -1,3 +1,6 @@
+% Boundary layer flow
+% Copyright © 2023 Ole Lindberg
+
 function f1 = Topography(topographyId,Lx,x)
 
 TOPOGRAPHY.COSINE   = 0;

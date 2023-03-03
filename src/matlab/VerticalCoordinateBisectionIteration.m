@@ -1,3 +1,6 @@
+% Boundary layer flow
+% Copyright © 2023 Ole Lindberg
+
 function c = VerticalCoordinateBisectionIteration(param,eta,a,b,tol,iterMax)
 
 z0 = param.z0;

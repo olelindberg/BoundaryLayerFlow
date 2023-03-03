@@ -1,3 +1,6 @@
+% Boundary layer flow
+% Copyright © 2023 Ole Lindberg
+
 function [u,uz] = LogarithmicVelocityProfile(us,kappa,z0,z)
 
 u = us/kappa*log((z+z0)/z0);

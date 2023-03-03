@@ -1,3 +1,6 @@
+% Boundary layer flow
+% Copyright © 2023 Ole Lindberg
+
 function Z = VerticalCoordinate(z0,li,lo,eta)
 
 a = 0;

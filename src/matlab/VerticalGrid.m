@@ -1,3 +1,6 @@
+% Boundary layer flow
+% Copyright © 2023 Ole Lindberg
+
 function [Zf,Zc] = VerticalGrid(Lx,kappa,z0,k1,etaf,etac)
 
 verticalGridId = 0;

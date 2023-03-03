@@ -1,3 +1,6 @@
+% Boundary layer flow
+% Copyright © 2023 Ole Lindberg
+
 function li = InnerLayerThickness(L,kappa,z0,tol,iterMax)
 
 li = L;
